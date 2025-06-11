@@ -5,6 +5,7 @@
     src="https://kit.fontawesome.com/784dd5315a.js"
     crossorigin="anonymous"
   ></script>
+  <link href="reset.css" rel="stylesheet" />
   <link href="home.css" rel="stylesheet" />
   <link
     rel="stylesheet"
@@ -17,24 +18,64 @@
   </head>
   <body>
     <header>
-      <img alt="logo" src="../assets/images/logo.png" />
+      <div class="logo">
+        <a href=""><img alt="logo" src="../assets/images/logo.png" /></a>
+      </div>
     </header>
     <main>
-      <div>
+      <div class="sidebar-country">
         <aside>
-          <ul>
+          <ul class="country-list">
             <!-- 여기서 국가별 요소는 우선 수동으로 몇개 넣고 나중에 js 처리-->
-            <li>
-              <span class="fi fi-cn"></span>
-              <a href="">중국</a>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-cn"></span>
+                중국
+              </a>
             </li>
-            <li>
+            <li class="country-item">
               <a href="">
                 <span class="fi fi-jp"></span>
                 일본
               </a>
             </li>
-            <li>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-us"></span>
+                미국
+              </a>
+            </li>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-cn"></span>
+                중국
+              </a>
+            </li>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-jp"></span>
+                일본
+              </a>
+            </li>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-us"></span>
+                미국
+              </a>
+            </li>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-cn"></span>
+                중국
+              </a>
+            </li>
+            <li class="country-item">
+              <a href="">
+                <span class="fi fi-jp"></span>
+                일본
+              </a>
+            </li>
+            <li class="country-item">
               <a href="">
                 <span class="fi fi-us"></span>
                 미국
@@ -43,22 +84,73 @@
           </ul>
         </aside>
       </div>
-      <div>
-        <div>
-          <span class="fi fi-cn"></span>
-          <p>중국</p>
-          <p>CNY</p>
-          <p>위안</p>
+      <div class="content-area">
+        <div class="exchange-header">
+          <div class="currency-info">
+            <span class="fi fi-cn"></span>
+            <p>중국</p>
+            <p>|</p>
+            <p>CNY</p>
+            <p>|</p>
+            <p>위안</p>
+          </div>
+          <div class="exchange-controls">
+            <div class="exchange-type">
+              <label>
+                <select>
+                  <option>살때</option>
+                  <option>팔때</option>
+                </select>
+              </label>
+            </div>
+            <div class="amount-input">
+              <label>
+                <input type="text" />
+              </label>
+              <button>확인</button>
+            </div>
+          </div>
         </div>
-        <div>
-          <label>
-            <input type="text" />
-          </label>
-          <button></button>
+        <div class="exchange-table">
+          <table>
+            <tr>
+              <th>환전소</th>
+              <th>필요 원화</th>
+              <th>절약 금액</th>
+              <th>환전 꿀팁</th>
+            </tr>
+            <tr>
+              <td>우리은행 환전소</td>
+              <td>1,310,000원</td>
+              <td>25,000원</td>
+              <td>모바일 앱으로 사전 신청 시 우대율 90%</td>
+            </tr>
+            <tr>
+              <td>하나은행 명동점</td>
+              <td>1,305,000원</td>
+              <td>30,000원</td>
+              <td>신한카드 결제 시 추가 우대</td>
+            </tr>
+            <tr>
+              <td>신한은행 인천공항</td>
+              <td>1,320,000원</td>
+              <td>15,000원</td>
+              <td>공항 내 자동환전기 이용 가능</td>
+            </tr>
+            <tr>
+              <td>한국투어익스프레스</td>
+              <td>1,290,000원</td>
+              <td>45,000원</td>
+              <td>미리 온라인 예약하면 수수료 면제</td>
+            </tr>
+            <tr>
+              <td>KEB하나 외환센터</td>
+              <td>1,315,000원</td>
+              <td>20,000원</td>
+              <td>여권 지참 시 VIP 우대율 적용</td>
+            </tr>
+          </table>
         </div>
-      </div>
-      <div>
-        <table></table>
       </div>
     </main>
     <footer>
