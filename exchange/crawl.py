@@ -1,16 +1,16 @@
-# import requests
-# from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
-# response = requests.get("https://bank.shinhan.com/index.jsp#020501010000")
-# html = response.text
-# soup = BeautifulSoup(html, 'html.parser')
 
-# 매매기준율 = soup.select_one("#grd_list_1_cell_0_2 > .w2grid_input w2grid_input_readonly").text
-# print(매매기준율)
+#     "고시시각:" PBLD_TM
+#     "고시회차:" PBLD_SQN
 
-# PBLD_TM = 고시시각(조회시각), PBLD_SQN = 고시회차 DEAL_BASC_RT = 매매기준율, TT_BUY_RT = 전신환매입율(손님이 해외송금 받을 때)
+#     "USD 매매기준율:" USD_DEAL_BASC_RT
+#     "USD 전신환매입율: USD_TT_BUY_RT
+
+#     "JPY 매매기준율:" JPY_DEAL_BASC_RT
+#     "JPY 전신환매입율:" JPY_TT_BUY_RT
+
 class crawler:
     def __init__(self):
         self.driver = webdriver.Chrome()
@@ -34,10 +34,10 @@ class crawler:
         self.PBLD_TM = PBLD.split(' ')[0:2]
         self.PBLD_SQN = PBLD.split(' ')[2]
         # 매매기준율, 전신환매입율
-        self.USD_DEAL_BASC_RT = self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_0_2 .w2grid_input.w2grid_input_readonly").text
-        self.USD_TT_BUY_RT = self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_0_3 .w2grid_input.w2grid_input_readonly").text
-        self.JPY_DEAL_BASC_RT = self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_1_2 .w2grid_input.w2grid_input_readonly").text
-        self.JPY_TT_BUY_RT = self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_1_3 .w2grid_input.w2grid_input_readonly").text
+        self.USD_DEAL_BASC_RT = float(self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_0_2 .w2grid_input.w2grid_input_readonly").text.replace(',', ''))
+        self.USD_TT_BUY_RT = float(self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_0_3 .w2grid_input.w2grid_input_readonly").text.replace(',', ''))
+        self.JPY_DEAL_BASC_RT = float(self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_1_2 .w2grid_input.w2grid_input_readonly").text.replace(',', ''))
+        self.JPY_TT_BUY_RT = float(self.driver.find_element(By.CSS_SELECTOR, "#grd_list_1_cell_1_3 .w2grid_input.w2grid_input_readonly").text.replace(',', ''))
 
     def hanabank(self):
         # 하나은행 크롤링 정상작동!
@@ -57,18 +57,20 @@ class crawler:
         usd_tr = tr[0].find_elements(By.CSS_SELECTOR, 'td.txtAr')
         jpy_tr = tr[1].find_elements(By.CSS_SELECTOR, 'td.txtAr')
 
-        self.USD_DEAL_BASC_RT = usd_tr[7].text
-        self.USD_TT_BUY_RT = usd_tr[5].text
-        self.JPY_DEAL_BASC_RT = jpy_tr[7].text
-        self.JPY_TT_BUY_RT = jpy_tr[5].text
+        self.USD_DEAL_BASC_RT = float(usd_tr[7].text.replace(',', ''))
+        self.USD_TT_BUY_RT = float(usd_tr[5].text.replace(',', ''))
+        self.JPY_DEAL_BASC_RT = float(jpy_tr[7].text.replace(',', ''))
+        self.JPY_TT_BUY_RT = float(jpy_tr[5].text.replace(',', ''))
 
-# test code / c. 뒤에 은행이름 넣으면 테스트 가능해요!
-if __name__ == "__main__":
-    c = crawler()
-    c.sinhanbank()
-    print("고시시각:", c.PBLD_TM)
-    print("고시회차:", c.PBLD_SQN)
-    print("USD 매매기준율:", c.USD_DEAL_BASC_RT)
-    print("USD 전신환매입율:", c.USD_TT_BUY_RT)
-    print("JPY 매매기준율:", c.JPY_DEAL_BASC_RT)
-    print("JPY 전신환매입율:", c.JPY_TT_BUY_RT)
+
+# test code / c. 뒤에 은행이름 넣으면 테스트 가능, 주석처리해제하고 사용
+
+# if __name__ == "__main__":
+#     c = crawler()
+#     c.sinhanbank()
+#     print("고시시각:", c.PBLD_TM)
+#     print("고시회차:", c.PBLD_SQN)
+#     print("USD 매매기준율:", c.USD_DEAL_BASC_RT)
+#     print("USD 전신환매입율:", c.USD_TT_BUY_RT)
+#     print("JPY 매매기준율:", c.JPY_DEAL_BASC_RT)
+#     print("JPY 전신환매입율:", c.JPY_TT_BUY_RT)
