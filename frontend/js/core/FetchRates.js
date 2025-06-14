@@ -1,29 +1,34 @@
 export class FetchRates {
-  constructor() {
-    // App.js에 있던 국가 데이터
-    this.countryData = {
-      cn: {
-        code: 'cn',
-        name: '중국',
-        currency: 'CNY',
-        currencyName: '위안',
-      },
-      jp: {
-        code: 'jp',
-        name: '일본',
-        currency: 'JPY',
-        currencyName: '엔',
-      },
-      us: {
-        code: 'us',
-        name: '미국',
-        currency: 'USD',
-        currencyName: '달러',
-      },
-    };
+  // 상수들을 클래스 상단에 정리
+  static EXCHANGE_VARIATION = 0.03;
+  static DEFAULT_COUNTRY = 'cn';
+  static DEFAULT_RATE = 1000;
 
-    // App.js에 있던 환전소 mock 데이터
-    this.mockExchangeData = {
+  constructor() {
+    this.countryData = this.initializeCountryData();
+    this.mockExchangeData = this.initializeMockExchangeData();
+    this.baseRates = this.initializeBaseRates();
+  }
+
+  // 데이터 초기화를 별도 메서드로 분리
+  initializeCountryData() {
+    return {
+      cn: { code: 'cn', name: '중국', currency: 'CNY', currencyName: '위안' },
+      jp: { code: 'jp', name: '일본', currency: 'JPY', currencyName: '엔' },
+      us: { code: 'us', name: '미국', currency: 'USD', currencyName: '달러' },
+    };
+  }
+
+  initializeBaseRates() {
+    return {
+      cn: 190, // 1 CNY = 190 KRW
+      jp: 9.5, // 1 JPY = 9.5 KRW
+      us: 1350, // 1 USD = 1350 KRW
+    };
+  }
+
+  initializeMockExchangeData() {
+    return {
       cn: [
         {
           name: '우리은행 환전소',
@@ -91,58 +96,58 @@ export class FetchRates {
         },
       ],
     };
-
-    // App.js에 있던 환율 데이터
-    this.baseRates = {
-      cn: 190, // 1 CNY = 190 KRW
-      jp: 9.5, // 1 JPY = 9.5 KRW
-      us: 1350, // 1 USD = 1350 KRW
-    };
   }
 
-  // 국가 정보 가져오기
   getCountryData(countryCode) {
     return this.countryData[countryCode];
   }
 
-  // 모든 국가 정보 가져오기
   getAllCountries() {
     return this.countryData;
   }
 
-  // 환전소 데이터 가져오기
   getExchangeData(countryCode) {
-    return this.mockExchangeData[countryCode] || this.mockExchangeData['cn'];
+    return (
+      this.mockExchangeData[countryCode] ||
+      this.mockExchangeData[FetchRates.DEFAULT_COUNTRY]
+    );
   }
 
-  // 기본 환율 가져오기
   getBaseRate(countryCode) {
-    return this.baseRates[countryCode] || 1000;
+    return this.baseRates[countryCode] || FetchRates.DEFAULT_RATE;
   }
 
-  // App.js에 있던 환전 계산 로직
+  // 수수료 계산 로직을 별도 메서드로 분리
+  calculateFeeRate(type) {
+    return type === 'buy' ? 1.02 : 0.98;
+  }
+
   calculateExchange(amount, type, countryCode) {
     const baseRate = this.getBaseRate(countryCode);
-    const fee = type === 'buy' ? 1.02 : 0.98; // 수수료 적용
-    return Math.floor(amount * baseRate * fee);
+    const feeRate = this.calculateFeeRate(type);
+    return Math.floor(amount * baseRate * feeRate);
   }
 
-  // App.js에 있던 계산된 환전소 데이터 생성 로직
+  // 개별 환전소 데이터 생성 로직 분리
+  generateSingleExchangeData(item, calculatedAmount) {
+    const randomFactor =
+      1 + (Math.random() - 0.5) * FetchRates.EXCHANGE_VARIATION;
+    const newAmount = Math.floor(calculatedAmount * randomFactor);
+    const savings = Math.abs(calculatedAmount - newAmount);
+
+    return {
+      ...item,
+      amount: `${newAmount.toLocaleString()}원`,
+      savings: `${savings.toLocaleString()}원`,
+    };
+  }
+
   generateCalculatedExchangeData(inputAmount, calculatedAmount, countryCode) {
-    const variation = 0.03; // 3% 변동폭
     const baseData = this.getExchangeData(countryCode);
 
-    return baseData.map((item) => {
-      const randomFactor = 1 + (Math.random() - 0.5) * variation;
-      const newAmount = Math.floor(calculatedAmount * randomFactor);
-      const savings = Math.abs(calculatedAmount - newAmount);
-
-      return {
-        ...item,
-        amount: `${newAmount.toLocaleString()}원`,
-        savings: `${savings.toLocaleString()}원`,
-      };
-    });
+    return baseData.map((item) =>
+      this.generateSingleExchangeData(item, calculatedAmount)
+    );
   }
 }
 

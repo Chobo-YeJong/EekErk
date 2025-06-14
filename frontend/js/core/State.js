@@ -1,30 +1,45 @@
-// 기본 pub-sub 상태 관리 시스템
 export class State {
   constructor() {
     this.state = {};
     this.observers = {};
   }
 
-  // 상태 설정
   setState(key, value) {
+    if (typeof key !== 'string') {
+      console.warn('State key must be a string');
+      return;
+    }
+
+    const oldValue = this.state[key];
     this.state[key] = value;
-    this.notify(key, value);
+
+    // 값이 실제로 변경된 경우에만 알림
+    if (oldValue !== value) {
+      this.notify(key, value);
+    }
   }
 
-  // 상태 가져오기
   getState(key) {
     return this.state[key];
   }
 
-  // 상태 변경 구독
+  // 전체 상태 가져오기 (디버깅용)
+  getAllState() {
+    return { ...this.state };
+  }
+
   subscribe(key, callback) {
+    if (typeof callback !== 'function') {
+      console.warn('Callback must be a function');
+      return;
+    }
+
     if (!this.observers[key]) {
       this.observers[key] = [];
     }
     this.observers[key].push(callback);
   }
 
-  // 구독 해제
   unsubscribe(key, callback) {
     if (this.observers[key]) {
       this.observers[key] = this.observers[key].filter(
@@ -33,13 +48,21 @@ export class State {
     }
   }
 
-  // 구독자들에게 알림
   notify(key, value) {
-    if (this.observers[key]) {
-      this.observers[key].forEach((callback) => callback(value));
-    }
+    this.observers[key]?.forEach((callback) => {
+      try {
+        callback(value);
+      } catch (error) {
+        console.error(`Error in state observer for ${key}:`, error);
+      }
+    });
+  }
+
+  // 상태 초기화
+  reset() {
+    this.state = {};
+    this.observers = {};
   }
 }
 
-// 전역 상태 인스턴스
 export const appState = new State();

@@ -3,28 +3,28 @@ import { fetchRates } from '../core/FetchRates.js';
 export class SidebarCountry {
   constructor() {
     this.element = null;
-    // 기존 하드코딩된 countries 배열을 fetchRates에서 가져오도록 변경
     this.countries = this.getCountriesFromFetchRates();
   }
 
   getCountriesFromFetchRates() {
-    const allCountries = fetchRates.getAllCountries();
-    // 기존과 같은 형태로 변환 (중복 제거)
-    return Object.values(allCountries);
+    return Object.values(fetchRates.getAllCountries());
   }
 
-  render() {
-    const countryItems = this.countries
-      .map(
-        (country) => `
+  // 국가 아이템 생성 로직을 별도 메서드로 분리
+  generateCountryItem(country) {
+    return `
       <li class="country-item">
         <a href="" data-country="${country.code}">
           <span class="fi fi-${country.code}"></span>
           ${country.name}
         </a>
       </li>
-    `
-      )
+    `;
+  }
+
+  render() {
+    const countryItems = this.countries
+      .map((country) => this.generateCountryItem(country))
       .join('');
 
     const template = `
@@ -43,26 +43,19 @@ export class SidebarCountry {
   }
 
   bindEvents() {
-    if (this.element) {
-      this.element.addEventListener(
-        'click',
-        this.handleCountryClick.bind(this)
-      );
-    }
+    this.element?.addEventListener('click', this.handleCountryClick.bind(this));
   }
 
   handleCountryClick(event) {
     event.preventDefault();
+
     const countryLink = event.target.closest('a[data-country]');
-    if (countryLink) {
-      const countryCode = countryLink.dataset.country;
-      // 국가 선택 이벤트 발생
-      this.onCountrySelect(countryCode);
-    }
+    if (!countryLink) return;
+
+    const countryCode = countryLink.dataset.country;
+    this.onCountrySelect?.(countryCode); // 옵셔널 체이닝 사용
   }
 
-  onCountrySelect(countryCode) {
-    // 이벤트 콜백 - 나중에 App.js에서 설정
-    console.log('Country selected:', countryCode);
-  }
+  // 기본 콜백을 빈 함수로 설정
+  onCountrySelect = () => {};
 }
