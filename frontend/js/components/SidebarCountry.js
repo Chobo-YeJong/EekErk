@@ -1,17 +1,16 @@
+import { fetchRates } from '../core/FetchRates.js';
+
 export class SidebarCountry {
   constructor() {
     this.element = null;
-    this.countries = [
-      { code: 'cn', name: '중국' },
-      { code: 'jp', name: '일본' },
-      { code: 'us', name: '미국' },
-      { code: 'cn', name: '중국' },
-      { code: 'jp', name: '일본' },
-      { code: 'us', name: '미국' },
-      { code: 'cn', name: '중국' },
-      { code: 'jp', name: '일본' },
-      { code: 'us', name: '미국' },
-    ];
+    // 기존 하드코딩된 countries 배열을 fetchRates에서 가져오도록 변경
+    this.countries = this.getCountriesFromFetchRates();
+  }
+
+  getCountriesFromFetchRates() {
+    const allCountries = fetchRates.getAllCountries();
+    // 기존과 같은 형태로 변환 (중복 제거)
+    return Object.values(allCountries);
   }
 
   render() {

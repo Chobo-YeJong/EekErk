@@ -1,4 +1,3 @@
-// App.js에서 사용하던 mock 데이터를 여기로 이동
 export class FetchRates {
   constructor() {
     // App.js에 있던 국가 데이터
