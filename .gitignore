@@ -50,3 +50,6 @@ frontend/dist/
 
 # Windows
 frontend/Thumbs.db
+
+# 가상환경
+venv
