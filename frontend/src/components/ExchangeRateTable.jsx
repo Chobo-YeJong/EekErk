@@ -5,175 +5,135 @@ function ExchangeRateTable({ selectedCountry }) {
   const [exchangeData, setExchangeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [supportedBanks, setSupportedBanks] = useState([]);
 
-  // 기본 더미 데이터 (API 호출 전까지 표시)
-  const defaultData = [
-    {
-      name: '신한은행',
-      amount: '조회 중...',
-      savings: '-',
-      tip: '모바일 앱으로 사전 신청 시 우대율 90%'
-    },
-    {
-      name: '하나은행',
-      amount: '조회 중...',
-      savings: '-',
-      tip: '신한카드 결제 시 추가 우대'
-    }
-  ];
+  // 지원 은행 목록 로드
+  useEffect(() => {
+    const loadSupportedBanks = async () => {
+      try {
+        const banksData = await exchangeAPI.getSupportedBanks();
+        setSupportedBanks(Object.keys(banksData.bank_details));
+      } catch (err) {
+        console.error('지원 은행 목록 로드 실패:', err);
+        // 기본값으로 설정
+        setSupportedBanks(['신한은행', '하나은행']);
+      }
+    };
 
-  // 안전하게 시간 정보 처리하는 함수
+    loadSupportedBanks();
+  }, []);
+
   const formatTimeInfo = (data) => {
     try {
-      let timeInfo = '';
-
-      // 고시시각 처리 - 여러 형태에 대응
-      if (data['고시시각:']) {
-        if (Array.isArray(data['고시시각:'])) {
-          timeInfo = data['고시시각:'].join(' ');
-        } else if (typeof data['고시시각:'] === 'string') {
-          timeInfo = data['고시시각:'];
-        }
-      } else if (data['고시시각']) {
-        if (Array.isArray(data['고시시각'])) {
-          timeInfo = data['고시시각'].join(' ');
-        } else if (typeof data['고시시각'] === 'string') {
-          timeInfo = data['고시시각'];
-        }
-      }
-
-      // 고시회차 추가
-      const round = data['고시회차:'] || data['고시회차'] || '';
-
-      return timeInfo ? `${timeInfo} ${round}`.trim() : '최신 환율';
+      const timeInfo = data['고시시각'] || '';
+      const round = data['고시회차'] || '';
+      const method = data['계산방식'] || '';
+      return timeInfo ? `${timeInfo} ${round} | ${method}`.trim() : '최신 환율';
     } catch (err) {
       console.error('시간 정보 처리 오류:', err);
       return '최신 환율';
     }
   };
 
-  // API 데이터 가져오기
+  // 동적 환율 데이터 가져오기
   const fetchExchangeData = async (currency) => {
     setLoading(true);
     setError(null);
 
     try {
+      // 모든 은행 환율 비교 API 사용 (새로운 방식)
+      const compareResult = await exchangeAPI.compareAllBanks(currency, 1);
+
+      if (compareResult.banks && compareResult.banks.length > 0) {
+        const results = compareResult.banks.map((bankData, index) => ({
+          name: bankData['은행'],
+          amount: `${(bankData['환전 원화 금액'] || 0).toLocaleString()}원`,
+          savings: index === 0 ? '🏆 최고 환율' : `${(compareResult.banks[0]['환전 원화 금액'] - bankData['환전 원화 금액']).toLocaleString()}원 차이`,
+          tip: formatTimeInfo(bankData)
+        }));
+
+        setExchangeData(results);
+      } else {
+        // 데이터가 없으면 기존 방식으로 fallback
+        await fetchExchangeDataLegacy(currency);
+      }
+    } catch (err) {
+      console.error('환율 비교 API 실패, 기존 방식으로 시도:', err);
+      await fetchExchangeDataLegacy(currency);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 기존 방식 (fallback)
+  const fetchExchangeDataLegacy = async (currency) => {
+    try {
       const results = [];
 
-      if (currency === 'USD') {
-        // 1달러 기준으로 조회
-        const [sinhanResult, hanaResult] = await Promise.allSettled([
-          exchangeAPI.getSinhanUsdToKrw(1),
-          exchangeAPI.getHanaUsdToKrw(1)
-        ]);
-
-        if (sinhanResult.status === 'fulfilled') {
-          const data = sinhanResult.value;
-          console.log('신한은행 USD 데이터:', data); // 디버깅용
-
-          results.push({
-            name: '신한은행',
+      // 지원하는 모든 은행에 대해 요청
+      const promises = supportedBanks.map(async (bankName) => {
+        try {
+          const data = await exchangeAPI.getExchangeRate(bankName, currency, 1);
+          return {
+            name: data['은행'],
             amount: `${(data['환전 원화 금액'] || 0).toLocaleString()}원`,
             savings: '최신 환율',
             tip: formatTimeInfo(data)
-          });
-        } else {
-          console.error('신한은행 USD 에러:', sinhanResult.reason);
+          };
+        } catch (err) {
+          console.warn(`${bankName} ${currency} 데이터 없음:`, err);
+          return null;
         }
+      });
 
-        if (hanaResult.status === 'fulfilled') {
-          const data = hanaResult.value;
-          console.log('하나은행 USD 데이터:', data); // 디버깅용
+      const settleds = await Promise.allSettled(promises);
 
-          results.push({
-            name: '하나은행',
-            amount: `${(data['환전 원화 금액'] || 0).toLocaleString()}원`,
-            savings: '최신 환율',
-            tip: formatTimeInfo(data)
-          });
-        } else {
-          console.error('하나은행 USD 에러:', hanaResult.reason);
+      settleds.forEach(result => {
+        if (result.status === 'fulfilled' && result.value) {
+          results.push(result.value);
         }
-      }
-      else if (currency === 'JPY') {
-        // 1엔 기준으로 조회
-        const [sinhanResult, hanaResult] = await Promise.allSettled([
-          exchangeAPI.getSinhanJpyToKrw(1),
-          exchangeAPI.getHanaJpyToKrw(1)
-        ]);
+      });
 
-        if (sinhanResult.status === 'fulfilled') {
-          const data = sinhanResult.value;
-          console.log('신한은행 JPY 데이터:', data); // 디버깅용
-
-          results.push({
-            name: '신한은행',
-            amount: `${(data['환전 원화 금액'] || 0).toLocaleString()}원`,
-            savings: '최신 환율',
-            tip: formatTimeInfo(data)
-          });
-        } else {
-          console.error('신한은행 JPY 에러:', sinhanResult.reason);
-        }
-
-        if (hanaResult.status === 'fulfilled') {
-          const data = hanaResult.value;
-          console.log('하나은행 JPY 데이터:', data); // 디버깅용
-
-          results.push({
-            name: '하나은행',
-            amount: `${(data['환전 원화 금액'] || 0).toLocaleString()}원`,
-            savings: '최신 환율',
-            tip: formatTimeInfo(data)
-          });
-        } else {
-          console.error('하나은행 JPY 에러:', hanaResult.reason);
-        }
-      }
-
-      // 결과가 있는 경우에만 정렬 및 비교
-      if (results.length > 0) {
-        // 환전 금액 기준으로 정렬 (높은 순)
+      // 환율 비교 로직
+      if (results.length > 1) {
         results.sort((a, b) => {
           const amountA = parseInt(a.amount.replace(/[^\d]/g, '')) || 0;
           const amountB = parseInt(b.amount.replace(/[^\d]/g, '')) || 0;
           return amountB - amountA;
         });
 
-        // 최고 환율에 절약 금액 표시
-        if (results.length > 1) {
-          const maxAmount = parseInt(results[0].amount.replace(/[^\d]/g, '')) || 0;
-          results.forEach((item, index) => {
-            const currentAmount = parseInt(item.amount.replace(/[^\d]/g, '')) || 0;
-            if (index === 0) {
-              item.savings = '🏆 최고 환율';
-            } else {
-              const diff = maxAmount - currentAmount;
-              item.savings = diff > 0 ? `${diff.toLocaleString()}원 차이` : '동일 환율';
-            }
-          });
-        } else if (results.length === 1) {
-          results[0].savings = '🏆 최고 환율';
-        }
+        const maxAmount = parseInt(results[0].amount.replace(/[^\d]/g, '')) || 0;
+        results.forEach((item, index) => {
+          const currentAmount = parseInt(item.amount.replace(/[^\d]/g, '')) || 0;
+          if (index === 0) {
+            item.savings = '🏆 최고 환율';
+          } else {
+            const diff = maxAmount - currentAmount;
+            item.savings = diff > 0 ? `${diff.toLocaleString()}원 차이` : '동일 환율';
+          }
+        });
       }
 
       setExchangeData(results);
     } catch (err) {
       setError('환율 정보를 가져오는데 실패했습니다.');
       console.error('전체 에러:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // 국가 선택 시 데이터 가져오기
   useEffect(() => {
-    if (selectedCountry && selectedCountry.currency !== 'CNY') {
+    if (selectedCountry && selectedCountry.currency !== 'CNY' && supportedBanks.length > 0) {
       fetchExchangeData(selectedCountry.currency);
     }
-  }, [selectedCountry]);
+  }, [selectedCountry, supportedBanks]);
 
-  // 표시할 데이터 결정
+  const defaultData = supportedBanks.map(bank => ({
+    name: bank,
+    amount: '조회 중...',
+    savings: '-',
+    tip: '데이터 로딩 중...'
+  }));
+
   const displayData = selectedCountry ?
       (loading ? defaultData : exchangeData.length > 0 ? exchangeData : defaultData) :
       [
@@ -187,38 +147,6 @@ function ExchangeRateTable({ selectedCountry }) {
 
   return (
       <div className="exchange-table">
-        {/* 헤더 추가 */}
-        {selectedCountry && selectedCountry.currency !== 'CNY' && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '15px',
-              padding: '10px 0'
-            }}>
-              <h3>
-                💱 1 {selectedCountry.currency} → KRW 실시간 환율
-              </h3>
-              {!loading && (
-                  <button
-                      onClick={() => fetchExchangeData(selectedCountry.currency)}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                  >
-                    🔄 새로고침
-                  </button>
-              )}
-            </div>
-        )}
-
-        {/* 중국 선택 시 메시지 */}
         {selectedCountry && selectedCountry.currency === 'CNY' && (
             <div style={{
               textAlign: 'center',
@@ -232,21 +160,19 @@ function ExchangeRateTable({ selectedCountry }) {
             </div>
         )}
 
-        {/* 로딩 상태 */}
         {loading && (
             <div style={{
               textAlign: 'center',
               padding: '10px',
-              backgroundColor: '#fff3cd',
-              border: '1px solid #ffeaa7',
+              backgroundColor: '#d1ecf1',
+              border: '1px solid #bee5eb',
               borderRadius: '4px',
               marginBottom: '15px'
             }}>
-              🔄 실시간 환율 정보를 가져오는 중... (10-20초 소요)
+              ⚡ {supportedBanks.length}개 은행 환율 정보 조회 중...
             </div>
         )}
 
-        {/* 에러 상태 */}
         {error && (
             <div style={{
               textAlign: 'center',
@@ -261,7 +187,6 @@ function ExchangeRateTable({ selectedCountry }) {
             </div>
         )}
 
-        {/* 테이블 */}
         {(!selectedCountry || selectedCountry.currency !== 'CNY') && (
             <table>
               <thead>
@@ -290,7 +215,7 @@ function ExchangeRateTable({ selectedCountry }) {
             </table>
         )}
       </div>
-  )
+  );
 }
 
-export default ExchangeRateTable
+export default ExchangeRateTable;

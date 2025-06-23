@@ -1,40 +1,61 @@
-// API 기본 주소 - 백엔드 FastAPI 서버 주소
+// API 기본 주소
 const API_BASE_URL = 'http://localhost:8000';
 
 export const exchangeAPI = {
-    // 신한은행 USD -> KRW 환율 계산
+    // 범용 환전 API (새로운 방식)
+    getExchangeRate: async (bankName, currency, amount = 1) => {
+        const response = await fetch(
+            `${API_BASE_URL}/exchange/${encodeURIComponent(bankName)}/${currency.toLowerCase()}-krw?amount=${amount}`
+        );
+        if (!response.ok) {
+            throw new Error(`${bankName} ${currency} 환율 조회 실패`);
+        }
+        return await response.json();
+    },
+
+    // 모든 은행 환율 비교
+    compareAllBanks: async (currency, amount = 1) => {
+        const response = await fetch(
+            `${API_BASE_URL}/compare/${currency.toLowerCase()}-krw?amount=${amount}`
+        );
+        if (!response.ok) {
+            throw new Error(`${currency} 환율 비교 실패`);
+        }
+        return await response.json();
+    },
+
+    // 지원 은행 목록 조회
+    getSupportedBanks: async () => {
+        const response = await fetch(`${API_BASE_URL}/banks`);
+        if (!response.ok) {
+            throw new Error('지원 은행 목록 조회 실패');
+        }
+        return await response.json();
+    },
+
+    // 지원 통화 목록 조회
+    getSupportedCurrencies: async () => {
+        const response = await fetch(`${API_BASE_URL}/currencies`);
+        if (!response.ok) {
+            throw new Error('지원 통화 목록 조회 실패');
+        }
+        return await response.json();
+    },
+
+    // 기존 API들 (하위 호환성 - 새로운 방식으로 내부 구현)
     getSinhanUsdToKrw: async (amount) => {
-        const response = await fetch(`${API_BASE_URL}/sinhan/usd-krw?amount=${amount}`);
-        if (!response.ok) {
-            throw new Error('API 호출 실패');
-        }
-        return await response.json();
+        return await exchangeAPI.getExchangeRate("신한은행", "USD", amount);
     },
 
-    // 신한은행 JPY -> KRW 환율 계산
     getSinhanJpyToKrw: async (amount) => {
-        const response = await fetch(`${API_BASE_URL}/sinhan/jpy-krw?amount=${amount}`);
-        if (!response.ok) {
-            throw new Error('API 호출 실패');
-        }
-        return await response.json();
+        return await exchangeAPI.getExchangeRate("신한은행", "JPY", amount);
     },
 
-    // 하나은행 USD -> KRW 환율 계산
     getHanaUsdToKrw: async (amount) => {
-        const response = await fetch(`${API_BASE_URL}/hana/usd-krw?amount=${amount}`);
-        if (!response.ok) {
-            throw new Error('API 호출 실패');
-        }
-        return await response.json();
+        return await exchangeAPI.getExchangeRate("하나은행", "USD", amount);
     },
 
-    // 하나은행 JPY -> KRW 환율 계산
     getHanaJpyToKrw: async (amount) => {
-        const response = await fetch(`${API_BASE_URL}/hana/jpy-krw?amount=${amount}`);
-        if (!response.ok) {
-            throw new Error('API 호출 실패');
-        }
-        return await response.json();
+        return await exchangeAPI.getExchangeRate("하나은행", "JPY", amount);
     }
 };
