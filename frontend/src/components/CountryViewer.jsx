@@ -1,24 +1,28 @@
+import Flag from 'react-world-flags';
+
 function CountryViewer({ selectedCountry }) {
-  if (!selectedCountry) {
+    if (selectedCountry) {
+        return (
+            <div className="exchange-header">
+                <div className="currency-info">
+                    <Flag
+                        code={selectedCountry.flagCode || selectedCountry.code}
+                        style={{ width: 32, height: 20 }}
+                    />
+                    <p>|</p>
+                    <p>{selectedCountry.name}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="exchange-header">
-          <div className="currency-info">
-            <p>환율 정보를 보려면 좌측에서 국가를 선택하세요</p>
-          </div>
+            <div className="currency-info">
+                <p>환율 정보를 불러오는 중...</p>
+            </div>
         </div>
-    )
-  }
-
-  return (
-      <div className="exchange-header">
-        <div className="currency-info">
-          <span className={`fi fi-${selectedCountry.code}`}></span>
-          <p>{selectedCountry.name}</p>
-          <p>|</p>
-          <p>{selectedCountry.currency}</p>
-        </div>
-      </div>
-  )
+    );
 }
 
-export default CountryViewer
+export default CountryViewer;

@@ -23,6 +23,7 @@ main {
 /* 사이드바 - 국가 리스트 */
 .sidebar-country {
   width: 20%;
+  margin-right: 20px;
 }
 
 .country-item {
@@ -49,7 +50,6 @@ main {
 /* 환전 헤더 (통화 정보 + 컨트롤) */
 .exchange-header {
   display: flex;
-  height: 65px;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 30px;
@@ -278,4 +278,26 @@ footer {
   .exchange-table td:nth-child(4) {
     font-size: 10px;
   }
+}
+
+/* 선택된 국가 하이라이트 */
+.country-item.active {
+  background-color: #f7b938;
+  border-radius: 4px;
+}
+
+.country-item.active a {
+  color: white;
+  font-weight: bold;
+}
+
+/* 국가 아이템 호버 효과 */
+.country-item:hover {
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.country-item.active:hover {
+  background-color: #e6a82d; /* 더 진한 색으로 호버 */
 }

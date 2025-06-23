@@ -3,7 +3,7 @@ function Header() {
     <header>
       <div className="logo">
         <a href="">
-          <img alt="logo" src="../assets/react.svg" />
+            <img alt="logo" src="/logo.png" />
         </a>
       </div>
     </header>

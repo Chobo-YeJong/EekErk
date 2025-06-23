@@ -194,7 +194,7 @@ function ExchangeRateTable({ selectedCountry }) {
                 <th>환전소</th>
                 <th>
                   {selectedCountry ?
-                      `1 ${selectedCountry.currency} → KRW` :
+                      `${selectedCountry.currency} → KRW` :
                       '환율 정보'
                   }
                 </th>

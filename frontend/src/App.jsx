@@ -8,10 +8,14 @@ import InputMoney from './components/InputMoney'
 import ExchangeRateTable from './components/ExchangeRateTable'
 import Sidebar from './components/Sidebar'
 import Footer from './components/Footer'
-// import ApiTest from './components/ApiTest' // 테스트 컴포넌트 제거
 
 function App() {
-    const [selectedCountry, setSelectedCountry] = useState(null);
+    const [selectedCountry, setSelectedCountry] = useState({
+        name: '미국',
+        currency: 'USD',
+        code: 'us',
+        flagCode: 'us'
+    });
 
     const handleCountrySelect = (country) => {
         setSelectedCountry(country);
@@ -27,7 +31,7 @@ function App() {
                 />
                 <div className="content-area">
                     <CountryViewer selectedCountry={selectedCountry} />
-                    <InputMoney />
+                    <InputMoney selectedCurrency={selectedCountry?.currency} />
                     <ExchangeRateTable selectedCountry={selectedCountry} />
                 </div>
             </main>
